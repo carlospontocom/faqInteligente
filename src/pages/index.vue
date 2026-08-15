@@ -10,7 +10,7 @@
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
-        <q-toolbar-title> FaqApp </q-toolbar-title> 
+        <q-toolbar-title> FaqApp </q-toolbar-title>
       </q-toolbar>
     </q-header>
 
