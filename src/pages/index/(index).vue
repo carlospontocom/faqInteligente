@@ -82,7 +82,7 @@
 <script setup>
 import { ref } from "vue";
 import { useQuasar } from "quasar";
-import emailjs from "@emailjs/browser";
+import axios from "axios"; // 👈 USANDO AXIOS
 
 // ============================================
 // VARIÁVEIS REATIVAS DO FORMULÁRIO
@@ -106,18 +106,10 @@ const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "";
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
 
-
-// ============================================
-// INICIALIZA O EMAILJS
-// ============================================
-if (PUBLIC_KEY) {
-  try {
-    emailjs.init(PUBLIC_KEY);
-    console.log("✅ EmailJS inicializado com sucesso!");
-  } catch (error) {
-    console.error("❌ Erro ao inicializar EmailJS:", error);
-  }
-}
+console.log("🔍 Configuração do EmailJS:");
+console.log("✅ Service ID:", SERVICE_ID);
+console.log("✅ Template ID:", TEMPLATE_ID);
+console.log("✅ Public Key:", PUBLIC_KEY);
 
 // ============================================
 // FUNÇÃO PARA LIMPAR O FORMULÁRIO
@@ -131,7 +123,7 @@ const limparFormulario = () => {
 };
 
 // ============================================
-// FUNÇÃO PARA ENVIAR O EMAIL
+// FUNÇÃO PARA ENVIAR O EMAIL COM AXIOS
 // ============================================
 const validarMensagem = async () => {
   if (carregando.value) return;
@@ -150,26 +142,35 @@ const validarMensagem = async () => {
   carregando.value = true;
 
   try {
-    const templateParams = {
-      from_name: nome.value,
-      from_email: email.value,
-      telefone: telefone.value,
-      subject: assunto.value,
-      message: mensagem.value,
+    // 👈 PAYLOAD para a API do EmailJS
+    const payload = {
+      service_id: SERVICE_ID,
+      template_id: TEMPLATE_ID,
+      user_id: PUBLIC_KEY,
+      template_params: {
+        from_name: nome.value,
+        from_email: email.value,
+        telefone: telefone.value,
+        subject: assunto.value,
+        message: mensagem.value,
+      },
     };
 
-    console.log("📨 Enviando e-mail:", templateParams);
+    console.log("📨 Enviando e-mail com Axios:", payload);
 
-    const response = await emailjs.send(
-      SERVICE_ID,
-      TEMPLATE_ID,
-      templateParams,
+    // 👈 REQUISIÇÃO COM AXIOS
+    const response = await axios.post(
+      "https://api.emailjs.com/api/v1.0/email/send",
+      payload,
       {
-        publicKey: PUBLIC_KEY,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 15000, // 15 segundos
       }
     );
 
-    console.log("✅ E-mail enviado com sucesso!", response);
+    console.log("✅ E-mail enviado com sucesso!", response.data);
 
     $q.notify({
       type: "positive",
@@ -180,15 +181,36 @@ const validarMensagem = async () => {
     });
 
     limparFormulario();
+
   } catch (error) {
     console.error("❌ Erro detalhado ao enviar e-mail:", error);
 
     let errorMessage = "Erro ao enviar mensagem. Tente novamente!";
 
-    if (error.text) {
-      errorMessage = error.text;
-    } else if (error.message) {
-      errorMessage = error.message;
+    // 👈 TRATAMENTO DE ERRO MAIS ROBUSTO COM AXIOS
+    if (error.response) {
+      // O servidor respondeu com status diferente de 2xx
+      console.error("📦 Dados do erro:", error.response.data);
+      console.error("📊 Status:", error.response.status);
+
+      if (error.response.status === 400) {
+        errorMessage = "❌ Requisição inválida. Verifique os dados.";
+      } else if (error.response.status === 401 || error.response.status === 403) {
+        errorMessage = "🔒 Erro de autenticação. Verifique sua Public Key.";
+      } else if (error.response.status === 404) {
+        errorMessage = "❌ Service ID ou Template ID não encontrado.";
+      } else if (error.response.status === 429) {
+        errorMessage = "⏳ Muitas requisições. Aguarde um momento.";
+      } else {
+        errorMessage = error.response.data?.message || error.response.statusText;
+      }
+    } else if (error.request) {
+      // A requisição foi feita mas não houve resposta
+      errorMessage = "⏰ Servidor não respondeu. Verifique sua conexão.";
+    } else if (error.code === "ECONNABORTED") {
+      errorMessage = "⏱️ Tempo limite excedido. O servidor demorou para responder.";
+    } else {
+      errorMessage = `⚠️ Erro: ${error.message}`;
     }
 
     $q.notify({
