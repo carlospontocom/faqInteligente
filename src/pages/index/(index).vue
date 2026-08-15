@@ -36,7 +36,7 @@
         v-model="telefone"
         mask="(##) #####-####"
         unmasked-value
-        :rules="[val => !!val || 'Informe seu telefone']"
+        :rules="[val => !!val || 'Informe seu telefone...']"
         outlined
         dense
       />
