@@ -106,10 +106,6 @@ const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "";
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
 
-console.log("🔍 Configuração do EmailJS:");
-console.log("✅ Service ID:", SERVICE_ID);
-console.log("✅ Template ID:", TEMPLATE_ID);
-console.log("✅ Public Key:", PUBLIC_KEY);
 
 // ============================================
 // FUNÇÃO PARA LIMPAR O FORMULÁRIO
