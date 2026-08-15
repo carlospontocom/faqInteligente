@@ -152,7 +152,7 @@ const validarMensagem = async () => {
       },
     };
 
-    console.log("📨 Enviando e-mail com Axios:", payload);
+    console.log("📨 Enviando e-mail");
 
     // 👈 REQUISIÇÃO COM AXIOS
     const response = await axios.post(
